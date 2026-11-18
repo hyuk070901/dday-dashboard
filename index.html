@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마감 D-day</title>
+<style>
+:root {
+  --bg: #eef2f7;
+  --surface: #ffffff;
+  --ink: #14213d;
+  --muted: #5b667a;
+  --line: #d5dce8;
+  --accent: #2b4acb;
+  --accent-ink: #ffffff;
+  --hot: #d6336c;
+  --warm: #c9740a;
+  --cool: #2b4acb;
+  --done: #8791a3;
+  --exam: #7a3dd8;
+  --task: #0f8a7a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1624;
+    --surface: #182236;
+    --ink: #e8edf7;
+    --muted: #9aa6bd;
+    --line: #2a3650;
+    --accent: #7b93ff;
+    --accent-ink: #0f1624;
+    --hot: #ff6b9a;
+    --warm: #f0a53c;
+    --cool: #7b93ff;
+    --done: #667189;
+    --exam: #b28cff;
+    --task: #4fd1bd;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  line-height: 1.5;
+  padding: 24px 16px 64px;
+}
+main { max-width: 640px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin: 8px 0 4px; letter-spacing: -0.02em; }
+.sub { margin: 0 0 20px; color: var(--muted); font-size: 0.95rem; }
+
+form {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+form .full { grid-column: 1 / -1; }
+label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+input, select, button { font: inherit; }
+input[type="text"], input[type="date"], select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+}
+input:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.add {
+  padding: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.add:active { transform: translateY(1px); }
+
+.summary { margin: 24px 4px 10px; color: var(--muted); font-size: 0.9rem; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+li.item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--cool);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+}
+li.item.hot { border-left-color: var(--hot); }
+li.item.warm { border-left-color: var(--warm); }
+li.item.done { border-left-color: var(--done); }
+
+.check { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
+.body { min-width: 0; }
+.title { font-weight: 700; overflow-wrap: anywhere; }
+.meta { font-size: 0.82rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+.badge { font-weight: 700; }
+.badge.exam { color: var(--exam); }
+.badge.task { color: var(--task); }
+
+.dday {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  min-width: 4.2rem;
+  text-align: right;
+  color: var(--cool);
+}
+li.hot .dday { color: var(--hot); }
+li.warm .dday { color: var(--warm); }
+li.done .dday, li.done .title { color: var(--done); }
+li.done .title { text-decoration: line-through; }
+
+.del {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.del:hover { color: var(--hot); }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 28px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+@media (max-width: 480px) {
+  form { grid-template-columns: 1fr; }
+  li.item { grid-template-columns: auto 1fr auto; }
+  .del { grid-column: 3; grid-row: 1; }
+  .dday { grid-column: 2 / 4; grid-row: 2; text-align: left; font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>마감 D-day</h1>
+  <p class="sub">과제와 시험 마감일을 입력하면 가장 급한 순서로 정렬해 줘요.</p>
+
+  <form id="form">
+    <label>과목
+      <input type="text" id="subject" required maxlength="30" placeholder="예: 컴퓨터시스템개론">
+    </label>
+    <label>종류
+      <select id="kind">
+        <option value="과제">과제</option>
+        <option value="시험">시험</option>
+      </select>
+    </label>
+    <label class="full">제목
+      <input type="text" id="title" required maxlength="60" placeholder="예: 3주차 레포트">
+    </label>
+    <label class="full">마감일
+      <input type="date" id="due" required>
+    </label>
+    <button class="add full" type="submit">추가하기</button>
+  </form>
+
+  <div class="summary" id="summary"></div>
+  <ul id="list"></ul>
+</main>
+
+<script>
+(function () {
+  var KEY = "dday-items-v1";
+  var items = load();
+
+  var form = document.getElementById("form");
+  var list = document.getElementById("list");
+  var summary = document.getElementById("summary");
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      var data = raw ? JSON.parse(raw) : [];
+      return Array.isArray(data) ? data : [];
+    } catch (e) { return []; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+  }
+
+  function daysLeft(dateStr) {
+    var p = dateStr.split("-");
+    var due = new Date(+p[0], +p[1] - 1, +p[2]);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((due - today) / 86400000);
+  }
+  function label(n) {
+    if (n === 0) return "D-day";
+    return n > 0 ? "D-" + n : "D+" + Math.abs(n);
+  }
+  function fmtDate(dateStr) {
+    var p = dateStr.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var w = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+    return (+p[1]) + "월 " + (+p[2]) + "일 (" + w + ")";
+  }
+
+  function sorted() {
+    return items.slice().sort(function (a, b) {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (a.due !== b.due) return a.due < b.due ? -1 : 1;
+      return a.created - b.created;
+    });
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function render() {
+    list.textContent = "";
+    var open = items.filter(function (i) { return !i.done; });
+    var urgent = open.filter(function (i) { return daysLeft(i.due) <= 3; }).length;
+    summary.textContent = items.length
+      ? "남은 일 " + open.length + "개 · 3일 이내 " + urgent + "개"
+      : "";
+
+    if (!items.length) {
+      list.appendChild(el("li", "empty", "아직 등록된 마감이 없어요. 위에서 첫 항목을 추가해 보세요."));
+      return;
+    }
+
+    sorted().forEach(function (it) {
+      var n = daysLeft(it.due);
+      var tone = it.done ? "done" : n <= 1 ? "hot" : n <= 3 ? "warm" : "";
+      var li = el("li", "item " + tone);
+
+      var cb = el("input", "check");
+      cb.type = "checkbox";
+      cb.checked = it.done;
+      cb.setAttribute("aria-label", it.title + " 완료");
+      cb.addEventListener("change", function () { it.done = cb.checked; save(); render(); });
+
+      var body = el("div", "body");
+      body.appendChild(el("div", "title", it.title));
+      var meta = el("div", "meta");
+      meta.appendChild(el("span", "badge " + (it.kind === "시험" ? "exam" : "task"), it.kind));
+      meta.appendChild(el("span", "", it.subject));
+      meta.appendChild(el("span", "", fmtDate(it.due)));
+      body.appendChild(meta);
+
+      var dd = el("div", "dday", label(n));
+
+      var del = el("button", "del", "✕");
+      del.type = "button";
+      del.setAttribute("aria-label", it.title + " 삭제");
+      del.addEventListener("click", function () {
+        items = items.filter(function (x) { return x.id !== it.id; });
+        save(); render();
+      });
+
+      li.appendChild(cb);
+      li.appendChild(body);
+      li.appendChild(dd);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var subject = document.getElementById("subject").value.trim();
+    var title = document.getElementById("title").value.trim();
+    var due = document.getElementById("due").value;
+    if (!subject || !title || !due) return;
+    items.push({
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      subject: subject,
+      title: title,
+      kind: document.getElementById("kind").value,
+      due: due,
+      done: false,
+      created: Date.now()
+    });
+    save();
+    document.getElementById("title").value = "";
+    document.getElementById("title").focus();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
